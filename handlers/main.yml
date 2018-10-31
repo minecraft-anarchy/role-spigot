@@ -1,0 +1,4 @@
+- name: restart spigot
+  service:
+    name: spigot
+    state: restarted

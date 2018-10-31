@@ -1,0 +1,23 @@
+[Unit]
+Description=Spigot Server
+After=network.target
+Requires=spigot.socket
+
+[Service]
+User=spigot
+Group=spigot
+WorkingDirectory=/srv/spigot/app
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+ExecStart=/usr/bin/java -Xmx{{ spigot_max_memory }} -Xms{{ spigot_initial_memory }} -jar /srv/spigot/app/current.jar nogui
+ExecStop=/bin/sh -c "echo 'save-all' > /run/spigot/console.socket"
+ExecStop=/bin/sh -c "echo 'stop' > /run/spigot/console.socket"
+Restart=on-failure
+ProtectHome=true
+ProtectSystem=full
+PrivateTmp=true
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,62 @@
+- name: install spigot apt pkg requirements
+  apt:
+    name:
+      - git
+      - openjdk-11-jdk-headless
+    state: present
+
+- name: create spigot group
+  group:
+    state: present
+    name: spigot
+    system: True
+
+- name: create spigot user
+  user:
+    state: present
+    name: spigot
+    group: spigot
+    shell: /bin/false
+    home: /srv/spigot
+    system: True
+
+- name: create spigot directory structure
+  file:
+    path: "/srv/spigot/{{ spigot_directory_item }}"
+    state: directory
+    mode: 0700
+    owner: spigot
+    group: spigot
+  with_items:
+    - "build/{{ spigot_version }}"
+    - app
+  loop_control:
+    loop_var: spigot_directory_item
+
+- name: download spigot build tools
+  get_url:
+    url: "{{ spigot_download_url }}"
+    dest: "/srv/spigot/build/{{ spigot_version }}"
+    owner: spigot
+    group: spigot
+    mode: 0755
+
+- name: run java build (takes about 15 minutes)
+  command: java -jar BuildTools.jar --rev "{{ spigot_version }}"
+  args:
+    creates: "/srv/spigot/build/{{ spigot_version }}/spigot-{{ spigot_version }}.jar"
+    chdir: "/srv/spigot/build/{{ spigot_version }}"
+  environment:
+    SHELL: /bin/bash
+  become: true
+  become_user: spigot
+
+- name: symlink spigot server .jar file to current
+  file:
+    state: link
+    src: "/srv/spigot/build/{{ spigot_version }}/spigot-{{ spigot_version }}.jar"
+    path: /srv/spigot/app/current.jar
+    owner: spigot
+    group: spigot
+    force: True
+  notify: restart spigot

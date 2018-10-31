@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+
+{% for key in spigot_config_file['variables'] | sort %}
+{{ key }}={{ spigot_config_file['variables'][key] }}
+{% endfor %}

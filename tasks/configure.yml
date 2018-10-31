@@ -1,0 +1,69 @@
+- name: place the server-icon.png for the client server list view
+  copy:
+    src: templates/srv/spigot/app/server-icon.png
+    dest: /srv/spigot/app/server-icon.png
+    owner: spigot
+    group: spigot
+    mode: 0640
+  notify: restart spigot
+  tags:
+    - configs
+
+- name: create plugin subdirectories
+  file:
+    state: directory
+    path: "{{ spigot_plugin_dir }}"
+    owner: spigot
+    group: spigot
+    mode: 0750
+  with_items: "{{ spigot_plugin_dirs }}"
+  loop_control:
+    loop_var: spigot_plugin_dir
+  tags:
+    - plugins
+
+  # TODO conditional restart
+  # TODO using mode from variable bugs around and totally messes up the value...
+- name: template the config files
+  template:
+    src: "{{ spigot_config_file['template'] }}"
+    dest: "{{ spigot_config_file['name'] }}"
+    owner: spigot
+    group: spigot
+    mode: 0440
+  with_items: "{{ spigot_config_files }}"
+  loop_control:
+    loop_var: spigot_config_file
+  notify: restart spigot
+  tags:
+    - configs
+    - plugins
+
+- name: deploy local plugins
+  copy:
+    src: "{{ spigot_local_plugin }}"
+    dest: /srv/spigot/app/plugins/
+    owner: spigot
+    group: spigot
+    mode: 0640
+  with_items: "{{ spigot_local_plugins }}"
+  loop_control:
+    loop_var: spigot_local_plugin
+  notify: restart spigot
+  tags:
+    - plugins
+
+- name: deploy plugins from the internet
+  get_url:
+    url: "{{ spigot_internet_plugin['url'] }}"
+    checksum: "{{ spigot_internet_plugin['checksum'] }}"
+    dest: /srv/spigot/app/plugins/
+    owner: spigot
+    group: spigot
+    mode: 0640
+  with_items: "{{ spigot_internet_plugins }}"
+  loop_control:
+    loop_var: spigot_internet_plugin
+  notify: restart spigot
+  tags:
+    - plugins

@@ -1,0 +1,42 @@
+- name: create systemd unit
+  template:
+    src: "etc/systemd/system/spigot.{{ spigot_systemd_service_unit }}.j2"
+    dest: "/etc/systemd/system/spigot.{{ spigot_systemd_service_unit }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - service
+    - socket
+  loop_control:
+    loop_var: spigot_systemd_service_unit
+  notify:
+    - restart spigot
+  register: spigot_systemd_unit
+
+- name: run systemctl daemon-reload
+  command: systemctl daemon-reload
+  when: spigot_systemd_unit.changed
+
+- name: configure /run/spigot directory presence using systemd
+  template:
+    src: etc/tmpfiles.d/spigot.conf.j2
+    dest: "/etc/tmpfiles.d/spigot.conf"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: trigger creation of /run/spigot directory
+  command: systemd-tmpfiles --create /etc/tmpfiles.d/spigot.conf
+  args:
+    creates: /run/spigot
+
+- name: enable the spigot systemd services on boot
+  service:
+    name: "spigot.{{ spigot_enable_service_item }}"
+    enabled: true
+  with_items:
+    - service
+    - socket
+  loop_control:
+    loop_var: spigot_enable_service_item

@@ -1,0 +1,11 @@
+[Unit]
+Description=Spigot Server Console
+
+[Socket]
+ListenFIFO=/run/spigot/console.socket
+SocketUser=spigot
+SocketGroup=spigot
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target
